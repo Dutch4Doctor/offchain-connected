@@ -430,16 +430,41 @@ async function fetchProfile(addr){
   }catch(e){}
 }
 
+async function fetchProfile(addr){
+  const rpc=network==='mainnet'?'https://rpc.mainnet.lukso.network':'https://rpc.testnet.lukso.network';
+  try{
+    const res=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',id:1,
+        params:[{to:addr,data:'0x54f6127f5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5'},'latest']})});
+    const data=await res.json();
+    if(!data.result||data.result==='0x') return;
+    const hex=data.result.slice(2);
+    const bytes=hex.match(/.{2}/g).map(b=>parseInt(b,16));
+    const str=bytes.map(b=>b>31&&b<127?String.fromCharCode(b):'').join('');
+    const ipfsMatch=str.match(/ipfs:\/\/[a-zA-Z0-9]+/);
+    const metaUrl=ipfsMatch?ipfsMatch[0]:null;
+    if(!metaUrl) return;
+    const cid=metaUrl.slice(7);
+    const metaRes=await fetch('/api/ipfs?cid='+encodeURIComponent(cid));
+    if(!metaRes.ok) return;
+    const meta=await metaRes.json();
+    const profile=meta.LSP3Profile||meta;
+    upName=profile.name||upName;
+    const imgs=profile.profileImage;
+    if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||'');
+  }catch(e){}
+}
+
 async function loadPhoto(rawUrl){
   if(!rawUrl) return;
   const cid=rawUrl.startsWith('ipfs://')?rawUrl.slice(7):rawUrl.replace(/^https?:\/\/[^/]+\/ipfs\//,'');
-  const url=cid?('/api/ipfs?cid='+encodeURIComponent(cid)):rawUrl;
+  const proxyUrl='/api/ipfs?cid='+encodeURIComponent(cid);
   await new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{profileImg=img;resolve()};
     img.onerror=()=>resolve();
     setTimeout(()=>resolve(),8000);
-    img.src=url;
+    img.src=proxyUrl;
   });
 }
 
