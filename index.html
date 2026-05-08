@@ -426,7 +426,7 @@ async function initUPProvider(){
   }catch(e){}
 }
 
-initUPProvider();
+if(window.self!==window.top) initUPProvider();
 
 async function connectUP(){
   const btn=document.getElementById('connectBtn');
