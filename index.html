@@ -519,31 +519,59 @@ function downloadBadge(){
   const filename='offchain-connected-'+(upAddress?upAddress.slice(0,8):'up')+'.png';
 
   hires.toBlob(async(blob)=>{
-    // Try Web Share API first (works on mobile — opens native share/save menu)
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[new File([blob],filename,{type:'image/png'})]})){
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // Try Web Share first
+    if(!isMobile && navigator.share && navigator.canShare){
       try{
-        await navigator.share({
-          files:[new File([blob],filename,{type:'image/png'})],
-          title:'Offchain Connected Badge',
-        });
-      } catch(e){
-        if(e.name!=='AbortError') fallbackDownload(blob,filename);
-      }
-    } else {
-      fallbackDownload(blob,filename);
+        const file=new File([blob],filename,{type:'image/png'});
+        if(navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:'Offchain Connected Badge'});
+          drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
+          goStep(3);
+          return;
+        }
+      }catch(e){}
     }
+
+    // On mobile or if share fails: show image overlay for long-press save
+    if(isMobile){
+      const url=URL.createObjectURL(blob);
+      showImageOverlay(url,filename);
+    } else {
+      // Desktop fallback: direct download
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      link.download=filename;link.href=url;link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+
     drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
     goStep(3);
   },'image/png');
 }
 
-function fallbackDownload(blob,filename){
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement('a');
-  link.download=filename;
-  link.href=url;
-  link.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+function showImageOverlay(url,filename){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;';
+
+  const instruction=document.createElement('p');
+  instruction.style.cssText='color:#e8f5f0;font-family:sans-serif;font-size:14px;margin-bottom:1.25rem;text-align:center;line-height:1.6;';
+  instruction.textContent='Houd de afbeelding ingedrukt om op te slaan in je foto\'s';
+
+  const img=document.createElement('img');
+  img.src=url;
+  img.style.cssText='max-width:280px;max-height:280px;border-radius:16px;display:block;';
+
+  const closeBtn=document.createElement('button');
+  closeBtn.textContent='Sluiten';
+  closeBtn.style.cssText='margin-top:1.5rem;padding:12px 32px;background:#0F6E56;border:none;border-radius:12px;color:white;font-size:14px;font-family:sans-serif;cursor:pointer;';
+  closeBtn.onclick=()=>{overlay.remove();URL.revokeObjectURL(url);};
+
+  overlay.appendChild(instruction);
+  overlay.appendChild(img);
+  overlay.appendChild(closeBtn);
+  document.body.appendChild(overlay);
 }
 
 function reset(){
