@@ -491,13 +491,25 @@ async function fetchProfile(addr){
 
 async function loadPhoto(rawUrl){
   if(!rawUrl) return;
-  const cid=rawUrl.startsWith('ipfs://')?rawUrl.slice(7):rawUrl.replace(/^https?:\/\/[^/]+\/ipfs\//,'');
+  let proxyUrl;
+  if(rawUrl.startsWith('ipfs://')){
+    const cid=rawUrl.slice(7);
+    proxyUrl='/api/ipfs?cid='+encodeURIComponent(cid);
+  } else if(rawUrl.includes('/ipfs/')){
+    const cid=rawUrl.split('/ipfs/')[1];
+    proxyUrl='/api/ipfs?cid='+encodeURIComponent(cid);
+  } else if(rawUrl.startsWith('https://')){
+    // direct https URL — fetch via proxy to avoid CORS
+    proxyUrl='/api/ipfs?cid='+encodeURIComponent(rawUrl);
+  } else {
+    proxyUrl='/api/ipfs?cid='+encodeURIComponent(rawUrl);
+  }
   await new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{profileImg=img;resolve()};
     img.onerror=()=>resolve();
     setTimeout(()=>resolve(),8000);
-    img.src='/api/ipfs?cid='+encodeURIComponent(cid);
+    img.src=proxyUrl;
   });
 }
 
