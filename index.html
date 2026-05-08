@@ -434,10 +434,12 @@ async function connectUP(){
   btn.disabled=true;
   await new Promise(r=>setTimeout(r,800));
   try{
-    if(upProvider){
+    if(upProvider&&window.self!==window.top){
+      // inside iframe on The Grid — use UP provider
       const accounts=await upProvider.request({method:'eth_requestAccounts'});
       upAddress=accounts[0];
     } else if(typeof window.lukso!=='undefined'){
+      // direct browser access with UP extension
       const accounts=await window.lukso.request({method:'eth_requestAccounts'});
       upAddress=accounts[0];
     } else {
