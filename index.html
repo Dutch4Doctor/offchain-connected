@@ -169,7 +169,7 @@ footer a:hover{color:var(--muted)}
 <footer>gebouwd op <a href="https://lukso.network" target="_blank">LUKSO</a> · LSP8 · Universal Profiles</footer>
 
 <script>
-let network='mainnet',upAddress=null,upName='UP',profileImg=null,selectedStyle=0;
+let network='mainnet',upAddress=null,upName='',profileImg=null,selectedStyle=0;
 
 const STYLES=[
   {id:0,name:'Classic green',type:'circle',bg:'#070b0a',ring:'#1D9E75',txt:'#1D9E75',pbg:'#0d1a14'},
@@ -250,10 +250,11 @@ function drawCircleBadge(canvas,style,size){
     coverDraw(ctx,profileImg,cx-rIn,cy-rIn,rIn*2,rIn*2);
   } else {
     ctx.fillStyle=style.pbg||'#1a1a2e';ctx.fillRect(0,0,size,size);
+    const initials=(upName||'UP').slice(0,2).toUpperCase();
     ctx.fillStyle=style.light?'rgba(0,0,0,0.2)':'rgba(255,255,255,0.15)';
     ctx.font=`500 ${20*s}px sans-serif`;
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(upName.slice(0,2).toUpperCase(),cx,cy);
+    ctx.fillText(initials,cx,cy);
   }
   ctx.restore();
   ctx.beginPath();ctx.arc(cx,cy,R_OUT*s,0,Math.PI*2);
@@ -269,12 +270,11 @@ function drawCircleBadge(canvas,style,size){
   ctx.fillText('20',CX-R_T,CY);
   ctx.fillText(String(getYear()%100),CX+R_T,CY);
   if(upAddress){
-    const label=upName!=='UP'?upName:shortAddr(upAddress);
-    const maxLen=18;
-    const display=label.length>maxLen?label.slice(0,maxLen)+'…':label;
-    ctx.font=`500 ${Math.min(9,Math.floor(160/Math.max(display.length,1)))*s}px monospace`;
+    const label=upName?upName:shortAddr(upAddress);
+    const fs=Math.min(9,Math.floor(150/Math.max(label.length,1)));
+    ctx.font=`500 ${fs}px monospace`;
     ctx.fillStyle=style.txt+'99';
-    ctx.fillText(display,CX,CY+(R_IN-4)*0.72);
+    ctx.fillText(label,CX,CY+(R_IN-4)*0.72);
   }
   ctx.restore();
 }
@@ -292,8 +292,7 @@ function drawHexBadge(canvas,size){
   ctx.closePath();ctx.clip();
   if(profileImg){
     const minX=590*S,maxX=1910*S,minY=666*S,maxY=1834*S;
-    const bw=maxX-minX,bh=maxY-minY;
-    coverDraw(ctx,profileImg,minX,minY,bw,bh);
+    coverDraw(ctx,profileImg,minX,minY,maxX-minX,maxY-minY);
   } else {
     ctx.fillStyle='#2a1020';ctx.fillRect(0,0,size,size);
   }
@@ -377,9 +376,9 @@ async function connectUP(){
       const img=document.createElement('img');img.src=profileImg.src;
       av.innerHTML='';av.appendChild(img);
     } else {
-      av.textContent=upName.slice(0,2).toUpperCase();
+      av.textContent=(upName||'UP').slice(0,2).toUpperCase();
     }
-    document.getElementById('upNameEl').textContent=upName;
+    document.getElementById('upNameEl').textContent=upName||shortAddr(upAddress);
     document.getElementById('upAddrEl').textContent=shortAddr(upAddress);
     buildStyleGrid();
     drawBadge(document.getElementById('previewCanvas'),selectedStyle,300);
@@ -408,9 +407,9 @@ async function fetchProfile(addr){
     if(!metaRes.ok) return;
     const meta=await metaRes.json();
     const profile=meta.LSP3Profile||meta;
-    upName=profile.name||profile.LSP3Profile?.name||meta.name||upName;
-    const imgs=profile.profileImage||meta.LSP3Profile?.profileImage;
-    if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||'');
+    upName=profile.name||meta.name||'';
+    const imgs=profile.profileImage||meta.profileImage;
+    if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||imgs[0]||'');
   }catch(e){}
 }
 
@@ -438,7 +437,7 @@ function downloadBadge(){
 }
 
 function reset(){
-  upAddress=null;upName='UP';profileImg=null;selectedStyle=0;
+  upAddress=null;upName='';profileImg=null;selectedStyle=0;
   const btn=document.getElementById('connectBtn');
   btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Verbind Universal Profile';
   btn.disabled=false;
