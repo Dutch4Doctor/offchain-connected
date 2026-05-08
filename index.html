@@ -125,7 +125,7 @@ footer a:hover{color:var(--muted)}
     <div class="preview-wrap"><canvas id="previewCanvas"></canvas></div>
     <button class="btn-p" onclick="downloadBadge()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Badge downloaden als PNG
+      Badge opslaan / delen
     </button>
     <div class="hint-box">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
@@ -158,7 +158,7 @@ footer a:hover{color:var(--muted)}
     <div class="divider"></div>
     <button class="btn-p" onclick="downloadBadge()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Nogmaals downloaden
+      Nogmaals opslaan / delen
     </button>
     <button class="btn-o" onclick="goStep(2)">Andere stijl kiezen</button>
     <button class="btn-o" style="margin-top:6px;font-size:12px;color:var(--dim)" onclick="reset()">Nieuw profiel verbinden</button>
@@ -516,12 +516,34 @@ async function loadPhoto(rawUrl){
 function downloadBadge(){
   const hires=document.createElement('canvas');
   drawBadge(hires,selectedStyle,800);
+  const filename='offchain-connected-'+(upAddress?upAddress.slice(0,8):'up')+'.png';
+
+  hires.toBlob(async(blob)=>{
+    // Try Web Share API first (works on mobile — opens native share/save menu)
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[new File([blob],filename,{type:'image/png'})]})){
+      try{
+        await navigator.share({
+          files:[new File([blob],filename,{type:'image/png'})],
+          title:'Offchain Connected Badge',
+        });
+      } catch(e){
+        if(e.name!=='AbortError') fallbackDownload(blob,filename);
+      }
+    } else {
+      fallbackDownload(blob,filename);
+    }
+    drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
+    goStep(3);
+  },'image/png');
+}
+
+function fallbackDownload(blob,filename){
+  const url=URL.createObjectURL(blob);
   const link=document.createElement('a');
-  link.download='pop-badge-'+(upAddress?upAddress.slice(0,8):'up')+'.png';
-  link.href=hires.toDataURL('image/png');
+  link.download=filename;
+  link.href=url;
   link.click();
-  drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
-  goStep(3);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 function reset(){
