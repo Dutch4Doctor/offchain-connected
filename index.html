@@ -388,37 +388,59 @@ async function connectUP(){
 }
 
 async function fetchProfile(addr){
+  // Try SigmaCore indexer first — clean REST API, no hex parsing needed
+  try{
+    const net=network==='mainnet'?'mainnet':'testnet';
+    const res=await fetch(`https://indexer.sigmacore.io/api/v1/${net}/profile/${addr}`);
+    if(res.ok){
+      const data=await res.json();
+      const profile=data?.LSP3Profile||data?.profile||data;
+      if(profile){
+        upName=profile.name||profile.LSP3Profile?.name||upName;
+        const imgs=profile.profileImage||profile.LSP3Profile?.profileImage;
+        if(imgs&&imgs[0]){
+          await loadPhoto(imgs[0].url||'');
+          if(profileImg) return;
+        }
+      }
+    }
+  }catch(e){}
+
+  // Fallback: direct RPC call
   try{
     const rpc=network==='mainnet'?'https://rpc.mainnet.lukso.network':'https://rpc.testnet.lukso.network';
     const res=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',id:1,
         params:[{to:addr,data:'0x54f6127f5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5'},'latest']})});
     const data=await res.json();
-    if(data.result&&data.result!=='0x'){
-      const hex=data.result.slice(2);
-      const off2=parseInt(hex.slice(0,64),16)*2;
-      const len=parseInt(hex.slice(off2,off2+64),16)*2;
-      const raw=hex.slice(off2+64,off2+64+len);
-      let str='';for(let i=0;i<raw.length;i+=2)str+=String.fromCharCode(parseInt(raw.slice(i,i+2),16));
-      const meta=JSON.parse(str);
-      if(meta.LSP3Profile){
-        upName=meta.LSP3Profile.name||upName;
-        const imgs=meta.LSP3Profile.profileImage;
-        if(imgs&&imgs[0]){
-          const rawUrl=imgs[0].url||'';
-          const cid=rawUrl.startsWith('ipfs://')?rawUrl.slice(7):rawUrl.replace(/^https?:\/\/[^/]+\/ipfs\//,'');
-          const proxyUrl='/api/ipfs?cid='+encodeURIComponent(cid);
-          await new Promise(resolve=>{
-            const img=new Image();
-            img.onload=()=>{profileImg=img;resolve()};
-            img.onerror=()=>resolve();
-            setTimeout(()=>resolve(),8000);
-            img.src=proxyUrl;
-          });
-        }
-      }
-    }
+    if(!data.result||data.result==='0x') return;
+    const hex=data.result.slice(2);
+    // Try to find JSON by scanning for '{'
+    const bytes=[];
+    for(let i=0;i<hex.length;i+=2) bytes.push(parseInt(hex.slice(i,i+2),16));
+    const str=bytes.map(b=>String.fromCharCode(b)).join('');
+    const jsonStart=str.indexOf('{');
+    const jsonEnd=str.lastIndexOf('}');
+    if(jsonStart===-1||jsonEnd===-1) return;
+    const meta=JSON.parse(str.slice(jsonStart,jsonEnd+1));
+    const profile=meta.LSP3Profile||meta;
+    upName=profile.name||upName;
+    const imgs=profile.profileImage;
+    if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||'');
   }catch(e){}
+}
+
+async function loadPhoto(rawUrl){
+  if(!rawUrl) return;
+  const cid=rawUrl.startsWith('ipfs://')?rawUrl.slice(7):rawUrl.replace(/^https?:\/\/[^/]+\/ipfs\//,'');
+  const url=cid?('/api/ipfs?cid='+encodeURIComponent(cid)):rawUrl;
+  await new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{profileImg=img;resolve()};
+    img.onerror=()=>resolve();
+    setTimeout(()=>resolve(),8000);
+    img.src=url;
+  });
 }
 
 function downloadBadge(){
