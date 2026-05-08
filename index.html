@@ -294,7 +294,11 @@ function drawHexBadge(canvas,size){
   ctx.closePath();ctx.clip();
   if(profileImg){
     const minX=590*S,maxX=1910*S,minY=666*S,maxY=1834*S;
-    ctx.drawImage(profileImg,minX,minY,maxX-minX,maxY-minY);
+    const iw=profileImg.naturalWidth||profileImg.width;
+const ih=profileImg.naturalHeight||profileImg.height;
+const scale=Math.max(bw/iw,bh/ih);
+const dw=iw*scale,dh=ih*scale;
+ctx.drawImage(profileImg,minX+(bw-dw)/2,minY+(bh-dh)/2,dw,dh);
   } else {
     ctx.fillStyle='#2a1020';ctx.fillRect(0,0,size,size);
   }
