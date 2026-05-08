@@ -426,6 +426,31 @@ async function initUPProvider(){
   }catch(e){}
 }
 
+async function getUPFromController(controllerAddr){
+  // The UP browser extension gives us the controller EOA address.
+  // We need to find the UP smart contract address it controls.
+  // Query the LSP0ERC725Account via eth_accounts on window.lukso gives us the UP directly in newer versions,
+  // but older versions give the controller. We try to detect by checking if the address has UP storage.
+  try{
+    const rpc=network==='mainnet'?'https://rpc.mainnet.lukso.network':'https://rpc.testnet.lukso.network';
+    // Check if this address itself is a UP (has LSP3 data)
+    const check=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',id:1,
+        params:[{to:controllerAddr,data:'0x54f6127f5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5'},'latest']})});
+    const checkData=await check.json();
+    if(checkData.result&&checkData.result!=='0x'&&checkData.result!=='0x'+'0'.repeat(64)){
+      return controllerAddr; // already a UP address
+    }
+    // Try to get UP address via window.lukso accounts (newer extension returns UP directly)
+    if(window.lukso.selectedAddress&&window.lukso.selectedAddress!==controllerAddr){
+      return window.lukso.selectedAddress;
+    }
+    return controllerAddr;
+  }catch(e){
+    return controllerAddr;
+  }
+}
+
 if(window.self!==window.top) initUPProvider();
 
 async function connectUP(){
@@ -440,8 +465,10 @@ async function connectUP(){
       upAddress=accounts[0];
     } else if(typeof window.lukso!=='undefined'){
       // direct browser access with UP extension
+      // extension returns controller address — get the actual UP address
       const accounts=await window.lukso.request({method:'eth_requestAccounts'});
-      upAddress=accounts[0];
+      const controller=accounts[0];
+      upAddress=await getUPFromController(controller)||controller;
     } else {
       upAddress='0x'+Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join('');
     }
