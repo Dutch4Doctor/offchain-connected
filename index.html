@@ -273,8 +273,15 @@ function drawCircleBadge(canvas,style,size){
     const label=upName?upName:shortAddr(upAddress);
     const fs=Math.min(9,Math.floor(150/Math.max(label.length,1)));
     ctx.font=`500 ${fs}px monospace`;
-    ctx.fillStyle=style.txt+'99';
-    ctx.fillText(label,CX,CY+(R_IN-4)*0.72);
+    const tw=ctx.measureText(label).width;
+    const lx=CX, ly=CY+(R_IN-4)*0.72;
+    const pad=fs*0.6;
+    ctx.fillStyle='rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.roundRect(lx-tw/2-pad,ly-fs*0.75,tw+pad*2,fs*1.5,fs*0.4);
+    ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.fillText(label,lx,ly);
   }
   ctx.restore();
 }
@@ -329,6 +336,23 @@ function drawHexBadge(canvas,size){
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(String(getYear()),0,0);
   ctx.restore();
+
+  // Name label centered in inner hex
+  if(upAddress){
+    const label=upName?upName:shortAddr(upAddress);
+    const fs=Math.round(size*0.028);
+    ctx.font=`500 ${fs}px monospace`;
+    const tw=ctx.measureText(label).width;
+    const lx=cx, ly=cy+(1258-1250)*S+(1834-1258)*S*0.55;
+    const pad=fs*0.6;
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.roundRect(lx-tw/2-pad,ly-fs*0.75,tw+pad*2,fs*1.5,fs*0.4);
+    ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,lx,ly);
+  }
 }
 
 function drawBadge(canvas,styleIdx,size){
