@@ -9,24 +9,14 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --green:#1D9E75;--green-d:#0F6E56;--green-dd:#085041;
-  --pink:#FF0060;
   --bg:#070b0a;--bg2:#0d1410;--bg3:#111a16;
   --border:rgba(29,158,117,0.18);--border-h:rgba(29,158,117,0.4);
   --text:#e8f5f0;--muted:#6b9e8a;--dim:#3d6054;
   --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
 }
 html{font-size:16px}
-body{
-  font-family:var(--font);background:var(--bg);color:var(--text);
-  min-height:100vh;display:flex;flex-direction:column;align-items:center;
-  padding:2rem 1rem 4rem;position:relative;overflow-x:hidden;
-}
-body::before{
-  content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
-  width:600px;height:600px;
-  background:radial-gradient(circle,rgba(29,158,117,0.05) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 4rem;position:relative;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(29,158,117,0.05) 0%,transparent 70%);pointer-events:none;z-index:0;}
 .wrap{position:relative;z-index:1;width:100%;max-width:440px}
 header{display:flex;align-items:center;gap:10px;margin-bottom:2.5rem;animation:fadeUp .6s ease both}
 .logo-mark{width:32px;height:32px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--bg2)}
@@ -182,13 +172,13 @@ footer a:hover{color:var(--muted)}
 let network='mainnet',upAddress=null,upName='UP',profileImg=null,selectedStyle=0;
 
 const STYLES=[
-  {id:0,name:'Classic green', type:'circle',bg:'#070b0a',ring:'#1D9E75',txt:'#1D9E75',pbg:'#0d1a14'},
-  {id:1,name:'Midnight blue', type:'circle',bg:'#07090f',ring:'#378ADD',txt:'#378ADD',pbg:'#0a0e1a'},
-  {id:2,name:'Golden hour',   type:'circle',bg:'#0f0a04',ring:'#EF9F27',txt:'#EF9F27',pbg:'#1a1208'},
-  {id:3,name:'Deep purple',   type:'circle',bg:'#08070f',ring:'#7F77DD',txt:'#7F77DD',pbg:'#110f1a'},
-  {id:4,name:'Coral fire',    type:'circle',bg:'#0f0704',ring:'#D85A30',txt:'#D85A30',pbg:'#1a0e08'},
-  {id:5,name:'Ice white',     type:'circle',bg:'#f0f4f8',ring:'#185FA5',txt:'#185FA5',pbg:'#dce8f5',light:true},
-  {id:6,name:'LUKSO',         type:'hex',   bg:'#0a0a0f'},
+  {id:0,name:'Classic green',type:'circle',bg:'#070b0a',ring:'#1D9E75',txt:'#1D9E75',pbg:'#0d1a14'},
+  {id:1,name:'Midnight blue',type:'circle',bg:'#07090f',ring:'#378ADD',txt:'#378ADD',pbg:'#0a0e1a'},
+  {id:2,name:'Golden hour',  type:'circle',bg:'#0f0a04',ring:'#EF9F27',txt:'#EF9F27',pbg:'#1a1208'},
+  {id:3,name:'Deep purple',  type:'circle',bg:'#08070f',ring:'#7F77DD',txt:'#7F77DD',pbg:'#110f1a'},
+  {id:4,name:'Coral fire',   type:'circle',bg:'#0f0704',ring:'#D85A30',txt:'#D85A30',pbg:'#1a0e08'},
+  {id:5,name:'Ice white',    type:'circle',bg:'#f0f4f8',ring:'#185FA5',txt:'#185FA5',pbg:'#dce8f5',light:true},
+  {id:6,name:'LUKSO',        type:'hex',   bg:'#0a0a0f'},
 ];
 
 function getYear(){return (new Date(Date.now()+3600000)).getUTCFullYear();}
@@ -239,6 +229,14 @@ function arcBottom(ctx,text,r,color){
   });
 }
 
+function coverDraw(ctx,img,x,y,w,h){
+  const iw=img.naturalWidth||img.width;
+  const ih=img.naturalHeight||img.height;
+  const scale=Math.max(w/iw,h/ih);
+  const dw=iw*scale,dh=ih*scale;
+  ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
+
 function drawCircleBadge(canvas,style,size){
   canvas.width=size;canvas.height=size;
   const ctx=canvas.getContext('2d');
@@ -249,11 +247,7 @@ function drawCircleBadge(canvas,style,size){
   ctx.save();
   ctx.beginPath();ctx.arc(cx,cy,rIn,0,Math.PI*2);ctx.clip();
   if(profileImg){
-    const iw=profileImg.naturalWidth||profileImg.width;
-const ih=profileImg.naturalHeight||profileImg.height;
-const scale=Math.max(rIn*2/iw,rIn*2/ih);
-const dw=iw*scale,dh=ih*scale;
-ctx.drawImage(profileImg,cx-dw/2,cy-dh/2,dw,dh);
+    coverDraw(ctx,profileImg,cx-rIn,cy-rIn,rIn*2,rIn*2);
   } else {
     ctx.fillStyle=style.pbg||'#1a1a2e';ctx.fillRect(0,0,size,size);
     ctx.fillStyle=style.light?'rgba(0,0,0,0.2)':'rgba(255,255,255,0.15)';
@@ -294,11 +288,8 @@ function drawHexBadge(canvas,size){
   ctx.closePath();ctx.clip();
   if(profileImg){
     const minX=590*S,maxX=1910*S,minY=666*S,maxY=1834*S;
-    const iw=profileImg.naturalWidth||profileImg.width;
-const ih=profileImg.naturalHeight||profileImg.height;
-const scale=Math.max(bw/iw,bh/ih);
-const dw=iw*scale,dh=ih*scale;
-ctx.drawImage(profileImg,minX+(bw-dw)/2,minY+(bh-dh)/2,dw,dh);
+    const bw=maxX-minX,bh=maxY-minY;
+    coverDraw(ctx,profileImg,minX,minY,bw,bh);
   } else {
     ctx.fillStyle='#2a1020';ctx.fillRect(0,0,size,size);
   }
@@ -396,49 +387,6 @@ async function connectUP(){
 }
 
 async function fetchProfile(addr){
-  // Try SigmaCore indexer first — clean REST API, no hex parsing needed
-  try{
-    const net=network==='mainnet'?'mainnet':'testnet';
-    const res=await fetch(`https://indexer.sigmacore.io/api/v1/${net}/profile/${addr}`);
-    if(res.ok){
-      const data=await res.json();
-      const profile=data?.LSP3Profile||data?.profile||data;
-      if(profile){
-        upName=profile.name||profile.LSP3Profile?.name||upName;
-        const imgs=profile.profileImage||profile.LSP3Profile?.profileImage;
-        if(imgs&&imgs[0]){
-          await loadPhoto(imgs[0].url||'');
-          if(profileImg) return;
-        }
-      }
-    }
-  }catch(e){}
-
-  // Fallback: direct RPC call
-  try{
-    const rpc=network==='mainnet'?'https://rpc.mainnet.lukso.network':'https://rpc.testnet.lukso.network';
-    const res=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',id:1,
-        params:[{to:addr,data:'0x54f6127f5ef83ad9559033e6e941db7d7c495acdce616347d28e90c7ce47cbfcfcad3bc5'},'latest']})});
-    const data=await res.json();
-    if(!data.result||data.result==='0x') return;
-    const hex=data.result.slice(2);
-    // Try to find JSON by scanning for '{'
-    const bytes=[];
-    for(let i=0;i<hex.length;i+=2) bytes.push(parseInt(hex.slice(i,i+2),16));
-    const str=bytes.map(b=>String.fromCharCode(b)).join('');
-    const jsonStart=str.indexOf('{');
-    const jsonEnd=str.lastIndexOf('}');
-    if(jsonStart===-1||jsonEnd===-1) return;
-    const meta=JSON.parse(str.slice(jsonStart,jsonEnd+1));
-    const profile=meta.LSP3Profile||meta;
-    upName=profile.name||upName;
-    const imgs=profile.profileImage;
-    if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||'');
-  }catch(e){}
-}
-
-async function fetchProfile(addr){
   const rpc=network==='mainnet'?'https://rpc.mainnet.lukso.network':'https://rpc.testnet.lukso.network';
   try{
     const res=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -450,9 +398,8 @@ async function fetchProfile(addr){
     const bytes=hex.match(/.{2}/g).map(b=>parseInt(b,16));
     const str=bytes.map(b=>b>31&&b<127?String.fromCharCode(b):'').join('');
     const ipfsMatch=str.match(/ipfs:\/\/[a-zA-Z0-9]+/);
-    const metaUrl=ipfsMatch?ipfsMatch[0]:null;
-    if(!metaUrl) return;
-    const cid=metaUrl.slice(7);
+    if(!ipfsMatch) return;
+    const cid=ipfsMatch[0].slice(7);
     const metaRes=await fetch('/api/ipfs?cid='+encodeURIComponent(cid));
     if(!metaRes.ok) return;
     const meta=await metaRes.json();
@@ -466,13 +413,12 @@ async function fetchProfile(addr){
 async function loadPhoto(rawUrl){
   if(!rawUrl) return;
   const cid=rawUrl.startsWith('ipfs://')?rawUrl.slice(7):rawUrl.replace(/^https?:\/\/[^/]+\/ipfs\//,'');
-  const proxyUrl='/api/ipfs?cid='+encodeURIComponent(cid);
   await new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{profileImg=img;resolve()};
     img.onerror=()=>resolve();
     setTimeout(()=>resolve(),8000);
-    img.src=proxyUrl;
+    img.src='/api/ipfs?cid='+encodeURIComponent(cid);
   });
 }
 
