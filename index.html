@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offchain Connected — LUKSO Badge</title>
+<title>Proof of Presence — LUKSO Badge</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -79,7 +79,7 @@ footer a:hover{color:var(--muted)}
   <div class="logo-mark">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#1D9E75" stroke-width="1.5"/><circle cx="8" cy="8" r="3" fill="#1D9E75"/></svg>
   </div>
-  <span class="logo-name">Offchain Connected</span>
+  <span class="logo-name">Proof of Presence</span>
   <div class="net-pill">
     <button class="net-btn active" id="btnMain" onclick="setNet('mainnet')">Mainnet</button>
     <button class="net-btn" id="btnTest" onclick="setNet('testnet')">Testnet</button>
@@ -381,13 +381,63 @@ function buildStyleGrid(){
   });
 }
 
+let upProvider=null;
+
+async function initUPProvider(){
+  try{
+    const {createClientUPProvider}=await import('https://esm.sh/@lukso/up-provider@0.3.5');
+    upProvider=createClientUPProvider();
+    upProvider.on('accountsChanged',async(accounts)=>{
+      if(accounts&&accounts[0]&&accounts[0]!==upAddress){
+        upAddress=accounts[0];
+        upName='';profileImg=null;
+        await fetchProfile(upAddress);
+        const av=document.getElementById('upAv');
+        if(profileImg){
+          const img=document.createElement('img');img.src=profileImg.src;
+          av.innerHTML='';av.appendChild(img);
+        } else {
+          av.textContent=(upName||'UP').slice(0,2).toUpperCase();
+        }
+        document.getElementById('upNameEl').textContent=upName||shortAddr(upAddress);
+        document.getElementById('upAddrEl').textContent=shortAddr(upAddress);
+        buildStyleGrid();
+        drawBadge(document.getElementById('previewCanvas'),selectedStyle,300);
+        goStep(2);
+      }
+    });
+    const accounts=await upProvider.request({method:'eth_accounts'});
+    if(accounts&&accounts[0]){
+      upAddress=accounts[0];
+      await fetchProfile(upAddress);
+      const av=document.getElementById('upAv');
+      if(profileImg){
+        const img=document.createElement('img');img.src=profileImg.src;
+        av.innerHTML='';av.appendChild(img);
+      } else {
+        av.textContent=(upName||'UP').slice(0,2).toUpperCase();
+      }
+      document.getElementById('upNameEl').textContent=upName||shortAddr(upAddress);
+      document.getElementById('upAddrEl').textContent=shortAddr(upAddress);
+      buildStyleGrid();
+      drawBadge(document.getElementById('previewCanvas'),selectedStyle,300);
+      goStep(2);
+    }
+  }catch(e){}
+}
+
+initUPProvider();
+
 async function connectUP(){
   const btn=document.getElementById('connectBtn');
   btn.innerHTML='<span class="spin"></span> Verbinden...';
   btn.disabled=true;
   await new Promise(r=>setTimeout(r,800));
   try{
-    if(typeof window.lukso!=='undefined'){
+    if(upProvider){
+      const accounts=await upProvider.request({method:'eth_requestAccounts'});
+      upAddress=accounts[0];
+    } else if(typeof window.lukso!=='undefined'){
       const accounts=await window.lukso.request({method:'eth_requestAccounts'});
       upAddress=accounts[0];
     } else {
