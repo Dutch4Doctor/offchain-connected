@@ -2,14 +2,17 @@ export default async function handler(req, res) {
   const { cid } = req.query;
   if (!cid) return res.status(400).send('Missing cid');
 
-  const gateways = [
-    `https://api.universalprofile.cloud/ipfs/${cid}`,
-    `https://cloudflare-ipfs.com/ipfs/${cid}`,
-    `https://ipfs.io/ipfs/${cid}`,
-    `https://gateway.pinata.cloud/ipfs/${cid}`,
-  ];
+  // If it's already a full URL, fetch it directly
+  const urls = cid.startsWith('http')
+    ? [cid]
+    : [
+        `https://api.universalprofile.cloud/ipfs/${cid}`,
+        `https://cloudflare-ipfs.com/ipfs/${cid}`,
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://gateway.pinata.cloud/ipfs/${cid}`,
+      ];
 
-  for (const url of gateways) {
+  for (const url of urls) {
     try {
       const response = await fetch(url);
       if (!response.ok) continue;
@@ -24,5 +27,5 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(404).send('Image not found');
+  res.status(404).send('Not found');
 }
