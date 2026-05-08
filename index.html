@@ -269,8 +269,12 @@ function drawCircleBadge(canvas,style,size){
   ctx.fillText('20',CX-R_T,CY);
   ctx.fillText(String(getYear()%100),CX+R_T,CY);
   if(upAddress){
-    ctx.font='500 8px monospace';ctx.fillStyle=style.txt+'88';
-    ctx.fillText(upName!=='UP'?upName:shortAddr(upAddress),CX,CY+(R_IN-4)*0.72);
+    const label=upName!=='UP'?upName:shortAddr(upAddress);
+    const maxLen=18;
+    const display=label.length>maxLen?label.slice(0,maxLen)+'…':label;
+    ctx.font=`500 ${Math.min(9,Math.floor(160/Math.max(display.length,1)))*s}px monospace`;
+    ctx.fillStyle=style.txt+'99';
+    ctx.fillText(display,CX,CY+(R_IN-4)*0.72);
   }
   ctx.restore();
 }
@@ -404,8 +408,8 @@ async function fetchProfile(addr){
     if(!metaRes.ok) return;
     const meta=await metaRes.json();
     const profile=meta.LSP3Profile||meta;
-    upName=profile.name||upName;
-    const imgs=profile.profileImage;
+    upName=profile.name||profile.LSP3Profile?.name||meta.name||upName;
+    const imgs=profile.profileImage||meta.LSP3Profile?.profileImage;
     if(imgs&&imgs[0]) await loadPhoto(imgs[0].url||'');
   }catch(e){}
 }
