@@ -276,7 +276,7 @@ ctx.drawImage(profileImg,cx-dw/2,cy-dh/2,dw,dh);
   ctx.fillText(String(getYear()%100),CX+R_T,CY);
   if(upAddress){
     ctx.font='500 8px monospace';ctx.fillStyle=style.txt+'88';
-    ctx.fillText(shortAddr(upAddress),CX,CY+(R_IN-4)*0.72);
+    ctx.fillText(upName!=='UP'?upName:shortAddr(upAddress),CX,CY+(R_IN-4)*0.72);
   }
   ctx.restore();
 }
