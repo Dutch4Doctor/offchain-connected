@@ -93,12 +93,12 @@ footer a:hover{color:var(--muted)}
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4C11.582 4 8 7.582 8 12c0 2.387.996 4.54 2.594 6.063C7.398 19.656 5 23.07 5 27h2c0-4.97 4.03-9 9-9s9 4.03 9 9h2c0-3.93-2.398-7.344-5.594-8.938A7.963 7.963 0 0 0 24 12c0-4.418-3.582-8-8-8zm0 2c3.313 0 6 2.688 6 6s-2.687 6-6 6-6-2.688-6-6 2.688-6 6-6z" fill="#1D9E75"/></svg>
       </div>
       <h1>Maak je badge</h1>
-      <p>Verbind je Universal Profile en download jouw persoonlijke <strong style="color:var(--green)">connected offchain</strong> afbeelding.</p>
+      <p>Verbind je Universal Profile en download jouw persoonlijke <strong style="color:var(--green)">offchain connected</strong> afbeelding. Downloaden werkt via desktop.</p>
       <button class="btn-p" id="connectBtn" onclick="connectUP()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Verbind Universal Profile
       </button>
-      <p class="ext-note">desktop: UP browser extension · mobiel: open via UP app</p>
+      <p class="ext-note">vereist de UP browser extension op desktop</p>
     </div>
   </div>
 </div>
@@ -125,11 +125,11 @@ footer a:hover{color:var(--muted)}
     <div class="preview-wrap"><canvas id="previewCanvas"></canvas></div>
     <button class="btn-p" onclick="downloadBadge()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Badge opslaan / delen
+      Badge downloaden als PNG
     </button>
     <div class="hint-box">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      <p class="hint-text">Na het downloaden: open de <strong style="color:var(--text)">Proof of Presence app</strong> in je UP mobile app om een QR code te genereren. Anderen scannen die QR om jouw badge als NFT te minten.<br><br><span id="iframeNotice" style="display:none;color:var(--green);">Voor de download: open <strong>offchain-connected.vercel.app</strong> in je browser.</span></p>
+      <p class="hint-text">Na het downloaden: open de <strong style="color:var(--text)">Proof of Presence app</strong> in de UP app om een QR code te genereren. Anderen scannen die QR om jouw badge als NFT te minten.<br><br><span id="iframeNotice" style="display:none;color:var(--green);">⚠️ Downloaden werkt alleen op desktop via <strong>offchain-connected.vercel.app</strong> — hier kun je een voorbeeld bekijken.</span></p>
     </div>
   </div>
 </div>
@@ -145,12 +145,11 @@ footer a:hover{color:var(--muted)}
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
     <h1 style="text-align:center;font-size:20px;margin-bottom:8px">Badge gedownload!</h1>
-    <p style="text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:1.5rem">Je badge staat op je apparaat. Volg de stappen om hem te gebruiken via de PoP app.</p>
+    <p style="text-align:center;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:1.5rem">Je badge staat in je downloads. Volg de stappen hieronder om hem te gebruiken.</p>
     <div class="preview-wrap"><canvas id="successCanvas"></canvas></div>
     <div class="divider"></div>
     <ul class="steps-list">
-      <li>Sla de badge op in je foto's</li>
-      <li>Open de <strong style="color:var(--text)">UP mobile app</strong></li>
+      <li>Open de <strong style="color:var(--text)">UP app</strong> op je telefoon</li>
       <li>Tik op <strong style="color:var(--text)">Proof of Presence</strong></li>
       <li>Genereer een QR code in de PoP app</li>
       <li>Laat anderen jouw QR scannen om te minten</li>
@@ -486,8 +485,8 @@ async function connectUP(){
     buildStyleGrid();
     drawBadge(document.getElementById('previewCanvas'),selectedStyle,300);
     goStep(2);
-    // Show download notice if in iframe on mobile
-    if(window.self!==window.top && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
+    // Show desktop-only notice on mobile
+    if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
       document.getElementById('iframeNotice').style.display='inline';
     }
   } catch(e){
