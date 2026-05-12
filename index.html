@@ -602,13 +602,16 @@ function showIpfsOverlay(ipfsUrl){
   if(ipfsUrl){
     overlay.innerHTML=`
       <p style="color:#e8f5f0;font-family:sans-serif;font-size:14px;text-align:center;line-height:1.6;max-width:280px;">
-        Je badge staat klaar! Tik op de knop om hem te openen en sla hem op via het menu van je browser.
+        Je badge staat klaar!
       </p>
-      <a href="${ipfsUrl}" target="_blank" style="display:block;width:100%;max-width:280px;padding:13px;background:#0F6E56;border:1px solid #1D9E75;border-radius:12px;color:white;font-size:14px;font-family:sans-serif;font-weight:600;text-align:center;text-decoration:none;">
-        Open badge →
+      <a href="${ipfsUrl}" download="offchain-connected-badge.png" target="_blank" style="display:block;width:100%;max-width:280px;padding:13px;background:#0F6E56;border:1px solid #1D9E75;border-radius:12px;color:white;font-size:14px;font-family:sans-serif;font-weight:600;text-align:center;text-decoration:none;">
+        ↓ Download badge
+      </a>
+      <a href="${ipfsUrl}" target="_blank" style="display:block;width:100%;max-width:280px;padding:11px;background:transparent;border:1px solid rgba(29,158,117,0.4);border-radius:12px;color:#1D9E75;font-size:13px;font-family:sans-serif;text-align:center;text-decoration:none;">
+        Open in browser
       </a>
       <p style="color:#3d6054;font-family:sans-serif;font-size:11px;text-align:center;max-width:280px;line-height:1.5;">
-        Tik op "Open badge" → tik op de drie puntjes in je browser → kies "Afbeelding opslaan"
+        Werkt downloaden niet? Open in browser → houd afbeelding ingedrukt → opslaan
       </p>
     `;
   } else {
