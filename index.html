@@ -544,7 +544,7 @@ async function loadPhoto(rawUrl){
   });
 }
 
-function downloadBadge(){
+async function downloadBadge(){
   const hires=document.createElement('canvas');
   drawBadge(hires,selectedStyle,800);
   const dataUrl=hires.toDataURL('image/png');
@@ -552,43 +552,78 @@ function downloadBadge(){
   const inIframe=window.self!==window.top;
   const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  if(inIframe&&isMobile){
-    showMobileOverlay(dataUrl);
+  drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
+  goStep(3);
+
+  if(isMobile){
+    // Upload to IPFS and show link
+    showUploadingOverlay();
+    try{
+      const res=await fetch('/api/upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageData:dataUrl})
+      });
+      if(!res.ok) throw new Error('Upload failed');
+      const {cid}=await res.json();
+      const ipfsUrl='https://api.universalprofile.cloud/ipfs/'+cid;
+      showIpfsOverlay(ipfsUrl);
+    }catch(e){
+      showIpfsOverlay(null);
+    }
   } else {
     const link=document.createElement('a');
     link.download=filename;
     link.href=dataUrl;
     link.click();
   }
-
-  drawBadge(document.getElementById('successCanvas'),selectedStyle,240);
-  goStep(3);
 }
 
-function showMobileOverlay(dataUrl){
+function showUploadingOverlay(){
+  const existing=document.getElementById('ipfsOverlay');
+  if(existing) existing.remove();
   const overlay=document.createElement('div');
+  overlay.id='ipfsOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;gap:1rem;';
+  overlay.innerHTML=`
+    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:#1D9E75;border-radius:50%;animation:rotate .7s linear infinite;"></div>
+    <p style="color:#e8f5f0;font-family:sans-serif;font-size:14px;text-align:center;">Badge uploaden...</p>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function showIpfsOverlay(ipfsUrl){
+  const existing=document.getElementById('ipfsOverlay');
+  if(existing) existing.remove();
+  const overlay=document.createElement('div');
+  overlay.id='ipfsOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;gap:1rem;';
 
-  const instruction=document.createElement('p');
-  instruction.style.cssText='color:#e8f5f0;font-family:sans-serif;font-size:14px;text-align:center;line-height:1.6;max-width:280px;';
-  instruction.innerHTML='Dit is een <strong>voorbeeld</strong> van je badge.<br><br>Om hem op te slaan, open de app via je browser:';
-
-  const urlBox=document.createElement('p');
-  urlBox.style.cssText='color:#1D9E75;font-family:monospace;font-size:13px;text-align:center;background:rgba(29,158,117,0.1);padding:10px 16px;border-radius:8px;border:1px solid rgba(29,158,117,0.3);max-width:280px;word-break:break-all;';
-  urlBox.textContent='offchain-connected.vercel.app';
-
-  const img=document.createElement('img');
-  img.src=dataUrl;
-  img.style.cssText='width:160px;height:160px;border-radius:12px;display:block;opacity:0.6;';
+  if(ipfsUrl){
+    overlay.innerHTML=`
+      <p style="color:#e8f5f0;font-family:sans-serif;font-size:14px;text-align:center;line-height:1.6;max-width:280px;">
+        Je badge staat klaar! Tik op de knop om hem te openen en sla hem op via het menu van je browser.
+      </p>
+      <a href="${ipfsUrl}" target="_blank" style="display:block;width:100%;max-width:280px;padding:13px;background:#0F6E56;border:1px solid #1D9E75;border-radius:12px;color:white;font-size:14px;font-family:sans-serif;font-weight:600;text-align:center;text-decoration:none;">
+        Open badge →
+      </a>
+      <p style="color:#3d6054;font-family:sans-serif;font-size:11px;text-align:center;max-width:280px;line-height:1.5;">
+        Tik op "Open badge" → tik op de drie puntjes in je browser → kies "Afbeelding opslaan"
+      </p>
+    `;
+  } else {
+    overlay.innerHTML=`
+      <p style="color:#e8f5f0;font-family:sans-serif;font-size:14px;text-align:center;line-height:1.6;max-width:280px;">
+        Upload mislukt. Open de app via je browser voor de download:<br><br>
+        <span style="color:#1D9E75;font-family:monospace;">offchain-connected.vercel.app</span>
+      </p>
+    `;
+  }
 
   const closeBtn=document.createElement('button');
   closeBtn.textContent='Sluiten';
   closeBtn.style.cssText='padding:11px 28px;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;font-family:sans-serif;cursor:pointer;width:100%;max-width:280px;';
   closeBtn.onclick=()=>overlay.remove();
-
-  overlay.appendChild(img);
-  overlay.appendChild(instruction);
-  overlay.appendChild(urlBox);
   overlay.appendChild(closeBtn);
   document.body.appendChild(overlay);
 }
