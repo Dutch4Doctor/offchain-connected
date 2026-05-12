@@ -458,13 +458,13 @@ async function connectUP(){
   btn.disabled=true;
   await new Promise(r=>setTimeout(r,800));
   try{
-    if(upProvider&&window.self!==window.top){
+    const inIframe = window.self !== window.top;
+    if(inIframe && upProvider){
       // inside iframe on The Grid — use UP provider
       const accounts=await upProvider.request({method:'eth_requestAccounts'});
       upAddress=accounts[0];
     } else if(typeof window.lukso!=='undefined'){
-      // direct browser access with UP extension
-      // extension returns controller address — get the actual UP address
+      // direct browser access with UP extension — always preferred on desktop
       const accounts=await window.lukso.request({method:'eth_requestAccounts'});
       const controller=accounts[0];
       upAddress=await getUPFromController(controller)||controller;
