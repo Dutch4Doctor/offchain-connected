@@ -168,7 +168,7 @@ footer a:hover{color:var(--muted)}
 <footer>gebouwd op <a href="https://lukso.network" target="_blank">LUKSO</a> · LSP8 · Universal Profiles</footer>
 
 <script>
-let network='mainnet',upAddress=null,upName='',profileImg=null,selectedStyle=0;
+let network='mainnet',upAddress=null,upName='',profileImg=null,selectedStyle=0,isConnecting=false;
 
 const STYLES=[
   {id:0,name:'Classic green',type:'circle',bg:'#070b0a',ring:'#1D9E75',txt:'#1D9E75',pbg:'#0d1a14'},
@@ -453,6 +453,8 @@ async function getUPFromController(controllerAddr){
 if(window.self!==window.top) initUPProvider();
 
 async function connectUP(){
+  if(isConnecting) return;
+  isConnecting=true;
   const btn=document.getElementById('connectBtn');
   btn.innerHTML='<span class="spin"></span> Verbinden...';
   btn.disabled=true;
@@ -490,6 +492,7 @@ async function connectUP(){
       document.getElementById('iframeNotice').style.display='inline';
     }
   } catch(e){
+    isConnecting=false;
     btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Verbind Universal Profile';
     btn.disabled=false;
   }
